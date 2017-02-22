@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import android.content.BroadcastReceiver;
 import android.content.Intent;
 
 import java.io.IOException;
@@ -22,8 +21,7 @@ public class PrinterHelper {
 
     private static final int REQUEST_ENABLE_BT = 999;
     private static final String TAG = "PrinterHelper";
-
-    public static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+    private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
     private static PrinterHelper INSTANCE;
 
@@ -35,7 +33,6 @@ public class PrinterHelper {
     private BluetoothSocket mBTSocket;
 
     private List<BluetoothDevice> mDevices;
-    private BroadcastReceiver mBTDiscoverReceiver;
 
     public static PrinterHelper getInstance() {
         synchronized (TAG) {
@@ -46,7 +43,7 @@ public class PrinterHelper {
         return INSTANCE;
     }
 
-    public PrinterHelper() {
+    private PrinterHelper() {
         this.mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         this.mDevices = new ArrayList<>(this.mBluetoothAdapter.getBondedDevices());
     }
@@ -105,7 +102,7 @@ public class PrinterHelper {
             if (this.mBTSocket != null) {
                 try {
                     this.mBTSocket.close();
-                } catch (IOException e1) {}
+                } catch (IOException ignored) {}
             }
         }
     }
@@ -118,7 +115,7 @@ public class PrinterHelper {
                 os.close();
 
                 this.mBTSocket.close();
-            } catch (IOException e1) {}
+            } catch (IOException ignored) {}
 
             this.mBTSocket = null;
         }
@@ -154,7 +151,7 @@ public class PrinterHelper {
         this.mListener = onPrinterListener;
     }
 
-    public BluetoothSocket getBTSocket() {
+    BluetoothSocket getBTSocket() {
         return mBTSocket;
     }
 
@@ -164,7 +161,7 @@ public class PrinterHelper {
 
     public String format(int n, int length) {
         String str = Integer.toString(n);
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         for (int i = str.length(); i < length; i++) {
             buffer.append('0');
         }
@@ -179,7 +176,7 @@ public class PrinterHelper {
             i++;
         }
         // Acumula o token
-        StringBuffer token = new StringBuffer();
+        StringBuilder token = new StringBuilder();
         while (i < buffer.length() && sep.indexOf(buffer.charAt(i)) < 0) {
             token.append(buffer.charAt(i++));
         }

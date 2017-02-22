@@ -8,16 +8,14 @@ import java.io.OutputStream;
 import br.com.ehureka.printers.interfaces.IPrinter;
 import br.com.ehureka.printers.interfaces.OnPrinterListener;
 
-import static android.R.attr.mode;
-
 class CMP10BTPrinter implements IPrinter {
 
-    public static final int FONT_A = 0;
-    public static final int FONT_B = 1;
+    private static final int FONT_A = 0;
+    private static final int FONT_B = 1;
 
-    public static final int LEFT_ALIGN = 0;
-    public static final int CENTER_ALIGN = 1;
-    public static final int RIGHT_ALIGN = 2;
+    private static final int LEFT_ALIGN = 0;
+    private static final int CENTER_ALIGN = 1;
+    private static final int RIGHT_ALIGN = 2;
 
     private byte mode;
     private static final byte[] UNIQUE_BYTE = new byte[1];
@@ -25,7 +23,7 @@ class CMP10BTPrinter implements IPrinter {
     private final PrinterHelper mBTHelper;
     private final OnPrinterListener mListener;
 
-    public CMP10BTPrinter(PrinterHelper helper, OnPrinterListener listener) {
+    CMP10BTPrinter(PrinterHelper helper, OnPrinterListener listener) {
         this.mBTHelper = helper;
         this.mListener = listener;
     }
@@ -83,8 +81,10 @@ class CMP10BTPrinter implements IPrinter {
         try {
             OutputStream os = btSocket.getOutputStream();
             os.flush();
+            this.mListener.onPrint();
         } catch (IOException e) {
             e.printStackTrace();
+            this.mListener.onError(OnPrinterListener.Error.PRINT_PROBLEM);
         }
     }
 
@@ -195,7 +195,7 @@ class CMP10BTPrinter implements IPrinter {
         println();
     }
 
-    public byte[] translate(String text) {
+    private byte[] translate(String text) {
         char[] chars = text.toCharArray();
         byte[] data = new byte[chars.length];
 
