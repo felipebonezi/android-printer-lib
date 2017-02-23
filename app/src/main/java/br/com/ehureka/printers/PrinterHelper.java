@@ -57,10 +57,6 @@ public class PrinterHelper {
     }
 
     private void initialize(PrinterEnum printerEnum) {
-        if (this.mPrinter != null) {
-            return;
-        }
-
         switch (printerEnum) {
             case CMP_10BT:
             default:
@@ -71,13 +67,11 @@ public class PrinterHelper {
 
     public void connect(PrinterEnum printer) {
         this.mBluetoothAdapter.cancelDiscovery();
-        this.mDevices.clear();
 
         if (this.mDevice == null) {
             BluetoothDevice tmp = null;
-            Set<BluetoothDevice> bondedDevices = this.mBluetoothAdapter.getBondedDevices();
-            if (bondedDevices != null && !bondedDevices.isEmpty()) {
-                for (BluetoothDevice device : bondedDevices) {
+            if (this.mDevices != null && !this.mDevices.isEmpty()) {
+                for (BluetoothDevice device : this.mDevices) {
                     if (device.getName().contains(printer.getLabel())) {
                         tmp = device;
                         break;
@@ -99,26 +93,26 @@ public class PrinterHelper {
 
             initialize(printer);
         } catch (IOException e) {
-            if (this.mBTSocket != null) {
-                try {
-                    this.mBTSocket.close();
-                } catch (IOException ignored) {}
-            }
+            e.printStackTrace();
+            disconnect();
         }
     }
 
     public void disconnect() {
-        if (this.mBTSocket != null) {
+        if (this.mBTSocket != null && this.mBTSocket.isConnected()) {
             try {
                 OutputStream os = this.mBTSocket.getOutputStream();
-                os.flush();
-                os.close();
+                if (os != null) {
+                    os.flush();
+                    os.close();
+                }
 
                 this.mBTSocket.close();
-            } catch (IOException ignored) {}
-
-            this.mBTSocket = null;
+            } catch (IOException ignored) {
+                ignored.printStackTrace();
+            }
         }
+        this.mBTSocket = null;
     }
 
     /**
