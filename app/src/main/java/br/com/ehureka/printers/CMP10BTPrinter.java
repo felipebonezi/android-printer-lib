@@ -10,13 +10,6 @@ import br.com.ehureka.printers.interfaces.OnPrinterListener;
 
 class CMP10BTPrinter implements IPrinter {
 
-    private static final int FONT_A = 0;
-    private static final int FONT_B = 1;
-
-    private static final int LEFT_ALIGN = 0;
-    private static final int CENTER_ALIGN = 1;
-    private static final int RIGHT_ALIGN = 2;
-
     private byte mode;
     private static final byte[] UNIQUE_BYTE = new byte[1];
 

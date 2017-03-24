@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.support.annotation.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -45,7 +46,11 @@ public class PrinterHelper {
 
     private PrinterHelper() {
         this.mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        this.mDevices = new ArrayList<>(this.mBluetoothAdapter.getBondedDevices());
+        if (this.mBluetoothAdapter != null) {
+            this.mDevices = new ArrayList<>(this.mBluetoothAdapter.getBondedDevices());
+        } else {
+            this.mDevices = new ArrayList<>();
+        }
     }
 
     public boolean isCompatible() {
@@ -69,15 +74,7 @@ public class PrinterHelper {
         this.mBluetoothAdapter.cancelDiscovery();
 
         if (this.mDevice == null) {
-            BluetoothDevice tmp = null;
-            if (this.mDevices != null && !this.mDevices.isEmpty()) {
-                for (BluetoothDevice device : this.mDevices) {
-                    if (device.getName().contains(printer.getLabel())) {
-                        tmp = device;
-                        break;
-                    }
-                }
-            }
+            BluetoothDevice tmp = getPrinterDevice(printer);
 
             if (tmp == null) {
                 this.mListener.onError(OnPrinterListener.Error.NO_DEVICE);
@@ -95,7 +92,38 @@ public class PrinterHelper {
         } catch (IOException e) {
             e.printStackTrace();
             disconnect();
+
+            this.mPrinter = null;
+            this.mListener.onError(OnPrinterListener.Error.NO_DEVICE);
         }
+    }
+
+    public boolean isConnected() {
+        return this.mBTSocket != null && this.mBTSocket.isConnected();
+    }
+
+    public boolean hasAnyPrinter() {
+        BluetoothDevice device = null;
+        for (PrinterEnum printer : PrinterEnum.values()) {
+            device = getPrinterDevice(printer);
+            if (device != null)
+                break;
+        }
+        return device != null;
+    }
+
+    @Nullable
+    private BluetoothDevice getPrinterDevice(PrinterEnum printer) {
+        BluetoothDevice tmp = null;
+        if (this.mDevices != null && !this.mDevices.isEmpty()) {
+            for (BluetoothDevice device : this.mDevices) {
+                if (device.getName().contains(printer.getLabel())) {
+                    tmp = device;
+                    break;
+                }
+            }
+        }
+        return tmp;
     }
 
     public void disconnect() {
