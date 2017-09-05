@@ -1,7 +1,6 @@
 package br.com.ehureka.printers.flow;
 
 import android.app.Activity;
-import android.bluetooth.BluetoothDevice;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -23,20 +22,21 @@ public class AppActivity extends Activity implements OnPrinterListener {
         } else if (!this.mHelper.isEnabled()) {
             Toast.makeText(this, "Your Bluetooth isn't enable.", Toast.LENGTH_SHORT).show();
             this.mHelper.enableBluetooth(this);
-        } else {
-            BluetoothDevice pairedDevice = this.mHelper.getDevice();
-            if (pairedDevice == null) {
-                Toast.makeText(this, "Your printer isn't paired.", Toast.LENGTH_SHORT).show();
-                // TODO Pair device over a custom dialog.
-            } else {
-                printSample();
-            }
         }
+//        else {
+//            BluetoothDevice pairedDevice = this.mHelper.getDevice();
+//            if (pairedDevice == null) {
+//                Toast.makeText(this, "Your printer isn't paired.", Toast.LENGTH_SHORT).show();
+//                 TODO Pair device over a custom dialog.
+//            } else {
+                printSample();
+//            }
+//        }
     }
 
     private void printSample() {
         this.mHelper.setOnPrinterListener(this);
-        this.mHelper.connect(PrinterEnum.CMP_10BT);
+        this.mHelper.connect(PrinterEnum.MTP_3);
 
         IPrinter printer = this.mHelper.getPrinter();
         printer.reset();
@@ -66,7 +66,7 @@ public class AppActivity extends Activity implements OnPrinterListener {
         printSeparator(printer, width);
         String barcode = "000430043511218001702080";
         printer.println(this.mHelper.center(barcode, width));
-        printer.barcode(barcode.toCharArray(), 2, 80);
+        printer.barcode(barcode.toCharArray(), 3, 80);
 
         printer.println();
         printer.println();

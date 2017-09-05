@@ -27,4 +27,6 @@ public interface IPrinter {
     void setAlign(int align);
     void barcode(char[] data, int width, int height);
 
+    void setPrinting(boolean value);
+    boolean isPrinting();
 }

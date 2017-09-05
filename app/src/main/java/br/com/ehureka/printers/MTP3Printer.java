@@ -8,7 +8,7 @@ import java.io.OutputStream;
 import br.com.ehureka.printers.interfaces.IPrinter;
 import br.com.ehureka.printers.interfaces.OnPrinterListener;
 
-class CMP10BTPrinter implements IPrinter {
+public class MTP3Printer implements IPrinter {
 
     private static final byte[] UNIQUE_BYTE = new byte[1];
 
@@ -18,7 +18,7 @@ class CMP10BTPrinter implements IPrinter {
     private final PrinterHelper mBTHelper;
     private final OnPrinterListener mListener;
 
-    CMP10BTPrinter(PrinterHelper helper, OnPrinterListener listener) {
+    MTP3Printer(PrinterHelper helper, OnPrinterListener listener) {
         this.mBTHelper = helper;
         this.mListener = listener;
     }
@@ -96,9 +96,9 @@ class CMP10BTPrinter implements IPrinter {
     @Override
     public int getWidth() {
         if ((this.mode & 0x01) == 1) {
-            return 41; // FONTE B
+            return 58; // FONTE B
         }
-        return 31; // FONTE A
+        return 48; // FONTE A
     }
 
     @Override
@@ -162,6 +162,8 @@ class CMP10BTPrinter implements IPrinter {
 
     @Override
     public void barcode(char[] data, int width, int height) {
+        setAlign(CENTER_ALIGN);
+
         // Altura
         print(new byte[] { 0x1D, 0x68, (byte) (height & 0xFF) });
 
@@ -188,6 +190,8 @@ class CMP10BTPrinter implements IPrinter {
 
         // Imprime e vai pra linha seguinte
         println();
+
+        setAlign(LEFT_ALIGN);
     }
 
     @Override

@@ -11,7 +11,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 import java.util.Vector;
 
@@ -33,6 +34,7 @@ public class PrinterHelper {
     private BluetoothDevice mDevice;
     private BluetoothSocket mBTSocket;
 
+    private Timer mTimer;
     private List<BluetoothDevice> mDevices;
 
     public static PrinterHelper getInstance() {
@@ -62,7 +64,19 @@ public class PrinterHelper {
     }
 
     private void initialize(PrinterEnum printerEnum) {
+        this.mTimer = new Timer();
+        this.mTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                checkPrinter();
+            }
+        }, 120000, 120000);
+
         switch (printerEnum) {
+            case MTP_3:
+                this.mPrinter = new MTP3Printer(this, this.mListener);
+                break;
+
             case CMP_10BT:
             default:
                 this.mPrinter = new CMP10BTPrinter(this, this.mListener);
@@ -70,11 +84,23 @@ public class PrinterHelper {
         }
     }
 
+    private void checkPrinter() {
+        if (!this.mPrinter.isPrinting()) {
+            this.mTimer.cancel();
+            this.mTimer = null;
+            disconnect();
+        }
+    }
+
     public void connect(PrinterEnum printer) {
+        connect(printer, null);
+    }
+
+    public void connect(PrinterEnum printer, String macAddress) {
         this.mBluetoothAdapter.cancelDiscovery();
 
         if (this.mDevice == null) {
-            BluetoothDevice tmp = getPrinterDevice(printer);
+            BluetoothDevice tmp = getPrinterDevice(printer, macAddress);
 
             if (tmp == null) {
                 this.mListener.onError(OnPrinterListener.Error.NO_DEVICE);
@@ -84,6 +110,10 @@ public class PrinterHelper {
             }
         }
 
+        if (isConnected()) {
+            disconnect();
+        }
+
         try {
             this.mBTSocket = this.mDevice.createInsecureRfcommSocketToServiceRecord(MY_UUID);
             this.mBTSocket.connect();
@@ -91,9 +121,8 @@ public class PrinterHelper {
             initialize(printer);
         } catch (IOException e) {
             e.printStackTrace();
-            disconnect();
 
-            this.mPrinter = null;
+            disconnect();
             this.mListener.onError(OnPrinterListener.Error.NO_DEVICE);
         }
     }
@@ -103,9 +132,13 @@ public class PrinterHelper {
     }
 
     public boolean hasAnyPrinter() {
+        return hasAnyPrinter(null);
+    }
+
+    public boolean hasAnyPrinter(String macAddress) {
         BluetoothDevice device = null;
         for (PrinterEnum printer : PrinterEnum.values()) {
-            device = getPrinterDevice(printer);
+            device = getPrinterDevice(printer, macAddress);
             if (device != null)
                 break;
         }
@@ -113,13 +146,21 @@ public class PrinterHelper {
     }
 
     @Nullable
-    private BluetoothDevice getPrinterDevice(PrinterEnum printer) {
+    private BluetoothDevice getPrinterDevice(PrinterEnum printer, String macAddress) {
         BluetoothDevice tmp = null;
         if (this.mDevices != null && !this.mDevices.isEmpty()) {
             for (BluetoothDevice device : this.mDevices) {
-                if (device.getName().contains(printer.getLabel())) {
-                    tmp = device;
-                    break;
+                if (macAddress == null) {
+                    String name = device.getName();
+                    if (name.contains(printer.getLabel())) {
+                        tmp = device;
+                        break;
+                    }
+                } else {
+                    if (device.getAddress().equals(macAddress)) {
+                        tmp = device;
+                        break;
+                    }
                 }
             }
         }
@@ -141,6 +182,7 @@ public class PrinterHelper {
             }
         }
         this.mBTSocket = null;
+        this.mPrinter = null;
     }
 
     /**
