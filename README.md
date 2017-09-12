@@ -4,6 +4,7 @@ This library can be used to print some stuff using your Android App.
 
 # Compatible Printers:
 1. Citizen CMP-10BT
+2. MTP-3 Bluetooth
 
 # License
 
