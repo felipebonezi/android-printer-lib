@@ -1,5 +1,7 @@
 package br.com.ehureka.printers.interfaces;
 
+import br.com.ehureka.printers.PrinterEnum;
+
 public interface IPrinter {
 
     public static final int FONT_A = 0;
@@ -8,6 +10,8 @@ public interface IPrinter {
     public static final int LEFT_ALIGN = 0;
     public static final int CENTER_ALIGN = 1;
     public static final int RIGHT_ALIGN = 2;
+
+    PrinterEnum getEnum();
 
     void print(byte[] data);
     void print(int data);
@@ -29,4 +33,6 @@ public interface IPrinter {
 
     void setPrinting(boolean value);
     boolean isPrinting();
+    void setPrinterListener(OnPrinterListener listener);
+
 }

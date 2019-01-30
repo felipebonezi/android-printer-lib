@@ -100,14 +100,24 @@ public class AppActivity extends Activity implements OnPrinterListener {
     }
 
     @Override
-    public void onError(Error error) {
-        Log.e("Print", "Code: " + error);
-        Log.e("Print", "Message: " + error.getMessage());
+    public void onConnected() {
+        Log.i("Print", "Conected");
+    }
+
+    @Override
+    public void onError(String error) {
+        Log.e("Print", String.format("Code: %s", error));
+        Log.e("Print", String.format("Message: %s", error));
     }
 
     @Override
     public void onPrint() {
         Log.d("Print", "Code: Success");
+    }
+
+    @Override
+    public void onPrintFinished() {
+        Log.d("Print", "Finished!");
     }
 
 }

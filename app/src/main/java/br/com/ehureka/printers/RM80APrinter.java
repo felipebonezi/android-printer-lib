@@ -8,7 +8,7 @@ import java.io.OutputStream;
 import br.com.ehureka.printers.interfaces.IPrinter;
 import br.com.ehureka.printers.interfaces.OnPrinterListener;
 
-class CMP10BTPrinter implements IPrinter {
+public class RM80APrinter implements IPrinter {
 
     private static final byte[] UNIQUE_BYTE = new byte[1];
 
@@ -18,14 +18,14 @@ class CMP10BTPrinter implements IPrinter {
 
     private final PrinterHelper mBTHelper;
 
-    CMP10BTPrinter(PrinterHelper helper, OnPrinterListener listener) {
+    RM80APrinter(PrinterHelper helper, OnPrinterListener listener) {
         this.mBTHelper = helper;
         this.mListener = listener;
     }
 
     @Override
     public PrinterEnum getEnum() {
-        return PrinterEnum.CMP_10BT;
+        return PrinterEnum.RM80A;
     }
 
     @Override
@@ -101,9 +101,9 @@ class CMP10BTPrinter implements IPrinter {
     @Override
     public int getWidth() {
         if ((this.mode & 0x01) == 1) {
-            return 41; // FONTE B
+            return 64; // FONTE B
         }
-        return 31; // FONTE A
+        return 47; // FONTE A
     }
 
     @Override
@@ -167,6 +167,8 @@ class CMP10BTPrinter implements IPrinter {
 
     @Override
     public void barcode(char[] data, int width, int height) {
+        setAlign(CENTER_ALIGN);
+
         // Altura
         print(new byte[] { 0x1D, 0x68, (byte) (height & 0xFF) });
 
@@ -193,6 +195,8 @@ class CMP10BTPrinter implements IPrinter {
 
         // Imprime e vai pra linha seguinte
         println();
+
+        setAlign(LEFT_ALIGN);
     }
 
     @Override
@@ -300,7 +304,7 @@ class CMP10BTPrinter implements IPrinter {
                 return (byte) 0xAA;
             case 186://'º'
             case 176://'°'
-                return (byte) 0xBA;
+                return (byte) 'o';
             case 183://'·'
                 return (byte) '.';
             case '0':

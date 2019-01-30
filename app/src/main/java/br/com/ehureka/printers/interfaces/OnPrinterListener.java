@@ -20,7 +20,9 @@ public interface OnPrinterListener {
 
     }
 
-    void onError(Error error);
+    void onConnected();
+    void onError(String error);
     void onPrint();
+    void onPrintFinished();
 
 }

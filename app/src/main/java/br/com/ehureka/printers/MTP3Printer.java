@@ -14,9 +14,9 @@ public class MTP3Printer implements IPrinter {
 
     private byte mode;
     private boolean mPrinting;
+    private OnPrinterListener mListener;
 
     private final PrinterHelper mBTHelper;
-    private final OnPrinterListener mListener;
 
     MTP3Printer(PrinterHelper helper, OnPrinterListener listener) {
         this.mBTHelper = helper;
@@ -24,14 +24,24 @@ public class MTP3Printer implements IPrinter {
     }
 
     @Override
+    public PrinterEnum getEnum() {
+        return PrinterEnum.MTP_3;
+    }
+
+    @Override
     public void print(byte[] data) {
         BluetoothSocket btSocket = this.mBTHelper.getBTSocket();
+        if (btSocket == null) {
+            this.mListener.onError(OnPrinterListener.Error.OUTPUT_PROBLEM.getMessage());
+            return;
+        }
+
         try {
             OutputStream os = btSocket.getOutputStream();
             os.write(data);
         } catch (IOException e) {
             e.printStackTrace();
-            this.mListener.onError(OnPrinterListener.Error.OUTPUT_PROBLEM);
+            this.mListener.onError(OnPrinterListener.Error.OUTPUT_PROBLEM.getMessage());
         }
     }
 
@@ -79,7 +89,7 @@ public class MTP3Printer implements IPrinter {
             this.mListener.onPrint();
         } catch (IOException e) {
             e.printStackTrace();
-            this.mListener.onError(OnPrinterListener.Error.PRINT_PROBLEM);
+            this.mListener.onError(OnPrinterListener.Error.PRINT_PROBLEM.getMessage());
         }
     }
 
@@ -96,9 +106,9 @@ public class MTP3Printer implements IPrinter {
     @Override
     public int getWidth() {
         if ((this.mode & 0x01) == 1) {
-            return 58; // FONTE B
+            return 64; // FONTE B
         }
-        return 48; // FONTE A
+        return 47; // FONTE A
     }
 
     @Override
@@ -189,9 +199,8 @@ public class MTP3Printer implements IPrinter {
         print(0x00);
 
         // Imprime e vai pra linha seguinte
-        println();
-
         setAlign(LEFT_ALIGN);
+        println();
     }
 
     @Override
@@ -202,6 +211,11 @@ public class MTP3Printer implements IPrinter {
     @Override
     public boolean isPrinting() {
         return this.mPrinting;
+    }
+
+    @Override
+    public void setPrinterListener(OnPrinterListener listener) {
+        this.mListener = listener;
     }
 
     private byte[] translate(String text) {
@@ -294,7 +308,7 @@ public class MTP3Printer implements IPrinter {
                 return (byte) 0xAA;
             case 186://'º'
             case 176://'°'
-                return (byte) 0xBA;
+                return (byte) 'o';
             case 183://'·'
                 return (byte) '.';
             case '0':

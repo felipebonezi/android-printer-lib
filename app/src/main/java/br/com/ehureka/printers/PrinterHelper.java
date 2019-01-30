@@ -23,7 +23,8 @@ public class PrinterHelper {
 
     private static final int REQUEST_ENABLE_BT = 999;
     private static final String TAG = "PrinterHelper";
-    private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+    public static final String PRINTER_UUID = "00001101-0000-1000-8000-00805F9B34FB";
+    private static final UUID MY_UUID = UUID.fromString(PRINTER_UUID);
 
     private static PrinterHelper INSTANCE;
 
@@ -47,6 +48,10 @@ public class PrinterHelper {
     }
 
     private PrinterHelper() {
+        refreshBoundedDevices();
+    }
+
+    public void refreshBoundedDevices() {
         this.mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (this.mBluetoothAdapter != null) {
             this.mDevices = new ArrayList<>(this.mBluetoothAdapter.getBondedDevices());
@@ -73,37 +78,56 @@ public class PrinterHelper {
         }, 120000, 120000);
 
         switch (printerEnum) {
-            case MTP_3:
-                this.mPrinter = new MTP3Printer(this, this.mListener);
+            case CMP_10BT:
+                this.mPrinter = new CMP10BTPrinter(this, this.mListener);
                 break;
 
-            case CMP_10BT:
+            case MHT80:
+                this.mPrinter = new MHT80Printer(this, this.mListener);
+                break;
+
+            case RP80A:
+                this.mPrinter = new RP80APrinter(this, this.mListener);
+                break;
+
+            case RM80A:
+                this.mPrinter = new RM80APrinter(this, this.mListener);
+                break;
+
+            case MTP_3:
             default:
-                this.mPrinter = new CMP10BTPrinter(this, this.mListener);
+                this.mPrinter = new MTP3Printer(this, this.mListener);
                 break;
         }
     }
 
     private void checkPrinter() {
-        if (!this.mPrinter.isPrinting()) {
-            this.mTimer.cancel();
-            this.mTimer = null;
+        if (this.mPrinter != null && !this.mPrinter.isPrinting()) {
             disconnect();
         }
     }
 
+    private void cancelTimer() {
+        this.mTimer.cancel();
+        this.mTimer = null;
+    }
+
     public void connect(PrinterEnum printer) {
-        connect(printer, null);
+        connect(printer, null, this.mListener);
     }
 
     public void connect(PrinterEnum printer, String macAddress) {
+        connect(printer, macAddress, this.mListener);
+    }
+
+    public void connect(PrinterEnum printer, String macAddress, OnPrinterListener listener) {
         this.mBluetoothAdapter.cancelDiscovery();
 
-        if (this.mDevice == null) {
+        if (this.mDevice == null || !this.mDevice.getAddress().equals(macAddress)) {
             BluetoothDevice tmp = getPrinterDevice(printer, macAddress);
 
             if (tmp == null) {
-                this.mListener.onError(OnPrinterListener.Error.NO_DEVICE);
+                listener.onError(OnPrinterListener.Error.NO_DEVICE.getMessage());
                 return;
             } else {
                 this.mDevice = tmp;
@@ -119,11 +143,12 @@ public class PrinterHelper {
             this.mBTSocket.connect();
 
             initialize(printer);
+            listener.onConnected();
         } catch (IOException e) {
             e.printStackTrace();
 
             disconnect();
-            this.mListener.onError(OnPrinterListener.Error.NO_DEVICE);
+            listener.onError(OnPrinterListener.Error.NO_DEVICE.getMessage());
         }
     }
 
@@ -136,28 +161,58 @@ public class PrinterHelper {
     }
 
     public boolean hasAnyPrinter(String macAddress) {
+        if (this.mDevice != null)
+            return true;
+        BluetoothDevice device = getBluetoothDevice(macAddress);
+        return device != null;
+    }
+
+    public BluetoothDevice getBluetoothDevice() {
+        return getBluetoothDevice(null);
+    }
+
+    public PrinterEnum getBondedPrinterEnum() {
+        if (this.mDevices != null && !this.mDevices.isEmpty()) {
+            for (PrinterEnum printer : PrinterEnum.values()) {
+                for (BluetoothDevice device : this.mDevices) {
+                    String name = device.getName();
+                    if (name != null && !name.isEmpty() && name.contains(printer.getLabel())) {
+                        return printer;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    public BluetoothDevice getBluetoothDevice(String macAddress) {
         BluetoothDevice device = null;
         for (PrinterEnum printer : PrinterEnum.values()) {
             device = getPrinterDevice(printer, macAddress);
             if (device != null)
                 break;
         }
-        return device != null;
+        return device;
+    }
+
+    public boolean isPrinting() {
+        return this.mPrinter != null && this.mPrinter.isPrinting();
     }
 
     @Nullable
-    private BluetoothDevice getPrinterDevice(PrinterEnum printer, String macAddress) {
+    public BluetoothDevice getPrinterDevice(PrinterEnum printer, String macAddress) {
         BluetoothDevice tmp = null;
         if (this.mDevices != null && !this.mDevices.isEmpty()) {
             for (BluetoothDevice device : this.mDevices) {
                 if (macAddress == null) {
                     String name = device.getName();
-                    if (name.contains(printer.getLabel())) {
+                    if (name != null && !name.isEmpty() && name.contains(printer.getLabel())) {
                         tmp = device;
                         break;
                     }
                 } else {
-                    if (device.getAddress().equals(macAddress)) {
+                    String address = device.getAddress();
+                    if (address != null && !address.isEmpty() && address.equals(macAddress)) {
                         tmp = device;
                         break;
                     }
@@ -168,6 +223,7 @@ public class PrinterHelper {
     }
 
     public void disconnect() {
+        this.cancelTimer();
         if (this.mBTSocket != null && this.mBTSocket.isConnected()) {
             try {
                 OutputStream os = this.mBTSocket.getOutputStream();
@@ -177,8 +233,8 @@ public class PrinterHelper {
                 }
 
                 this.mBTSocket.close();
-            } catch (IOException ignored) {
-                ignored.printStackTrace();
+            } catch (IOException ex) {
+                ex.printStackTrace();
             }
         }
         this.mBTSocket = null;
