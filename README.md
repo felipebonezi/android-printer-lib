@@ -5,6 +5,9 @@ This library can be used to print some stuff using your Android App.
 # Compatible Printers:
 1. Citizen CMP-10BT
 2. MTP-3 Bluetooth
+3. MHT-80
+4. RM80-A
+5. RP80-A
 
 # License
 
