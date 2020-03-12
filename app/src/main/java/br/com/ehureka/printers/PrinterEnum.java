@@ -1,11 +1,13 @@
 package br.com.ehureka.printers;
 
 public enum PrinterEnum {
-    CMP_10BT("CITIZEN", "EPSON")
+    GENERIC("Genérica", "Genérica")
+    , CMP_10BT("CITIZEN", "EPSON")
     , MTP_3("MTP-3", "CHINA")
     , MHT80("MHT80", "MILESTONE")
     , RP80A("RP80-A", "MILESTONE")
     , RM80A("RM80-A", "MILESTONE")
+    , IPOS("IPOSPrinter", "CHINA")
     ;
 
     private String label;
@@ -26,10 +28,10 @@ public enum PrinterEnum {
 
     public static PrinterEnum getByModel(String name) {
         for (PrinterEnum printerEnum : values()) {
-            if (printerEnum.label.contains(name))
+            if (printerEnum.label.toLowerCase().contains(name.toLowerCase()))
                 return printerEnum;
         }
-        return null;
+        return PrinterEnum.GENERIC;
     }
 
 }

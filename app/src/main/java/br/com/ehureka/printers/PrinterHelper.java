@@ -5,7 +5,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -77,6 +77,11 @@ public class PrinterHelper {
             }
         }, 120000, 120000);
 
+        if (printerEnum == null) {
+            this.mPrinter = new GenericPrinter(this, this.mListener);
+            return;
+        }
+
         switch (printerEnum) {
             case CMP_10BT:
                 this.mPrinter = new CMP10BTPrinter(this, this.mListener);
@@ -95,8 +100,16 @@ public class PrinterHelper {
                 break;
 
             case MTP_3:
-            default:
                 this.mPrinter = new MTP3Printer(this, this.mListener);
+                break;
+
+            case IPOS:
+                this.mPrinter = new IPOSPrinter(this, this.mListener);
+                break;
+
+            case GENERIC:
+            default:
+                this.mPrinter = new GenericPrinter(this, this.mListener);
                 break;
         }
     }
@@ -108,6 +121,9 @@ public class PrinterHelper {
     }
 
     private void cancelTimer() {
+        if (this.mTimer == null)
+            return;
+
         this.mTimer.cancel();
         this.mTimer = null;
     }
@@ -132,6 +148,11 @@ public class PrinterHelper {
             } else {
                 this.mDevice = tmp;
             }
+        }
+
+        if (this.mDevice == null) {
+            listener.onError(OnPrinterListener.Error.NO_DEVICE.getMessage());
+            return;
         }
 
         if (isConnected()) {
@@ -206,7 +227,7 @@ public class PrinterHelper {
             for (BluetoothDevice device : this.mDevices) {
                 if (macAddress == null) {
                     String name = device.getName();
-                    if (name != null && !name.isEmpty() && name.contains(printer.getLabel())) {
+                    if ((name != null && !name.isEmpty() && name.contains(printer.getLabel())) || printer == PrinterEnum.GENERIC) {
                         tmp = device;
                         break;
                     }
