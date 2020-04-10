@@ -233,7 +233,7 @@ public class PrinterHelper {
                     }
                 } else {
                     String address = device.getAddress();
-                    if (address != null && !address.isEmpty() && address.equals(macAddress)) {
+                    if (address != null && !address.isEmpty() && address.equalsIgnoreCase(macAddress)) {
                         tmp = device;
                         break;
                     }
