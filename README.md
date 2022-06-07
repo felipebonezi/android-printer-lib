@@ -1,3 +1,5 @@
+[![Android CI](https://github.com/ehureka/android-printer-lib/actions/workflows/android.yml/badge.svg)](https://github.com/ehureka/android-printer-lib/actions/workflows/android.yml)
+
 # Android Printer Library
 This library can be used to print some stuff using your Android App.
 
