@@ -1,5 +1,6 @@
 # Android Printer Library
 This library can be used to print some stuff using your Android App.
+
 *Join our effort and contribute for the community!*
 
 # Compatible Printers:
@@ -16,7 +17,7 @@ P.S.: We also has a GenericPrinter.class that you can test in any other printers
 
 This software is licensed under the Apache 2 license, quoted below.
 
-Copyright (C) 2015-2017 Ehureka. (https://www.ehureka.com.br).
+Copyright (C) 2015-2022 Ehureka. (https://www.ehureka.com.br).
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this project except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0.
 

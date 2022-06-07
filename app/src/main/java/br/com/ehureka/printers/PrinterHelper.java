@@ -1,11 +1,19 @@
 package br.com.ehureka.printers;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
+
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -16,6 +24,7 @@ import java.util.TimerTask;
 import java.util.UUID;
 import java.util.Vector;
 
+import br.com.ehureka.printers.exceptions.PrinterException;
 import br.com.ehureka.printers.interfaces.IPrinter;
 import br.com.ehureka.printers.interfaces.OnPrinterListener;
 
@@ -38,12 +47,13 @@ public class PrinterHelper {
     private Timer mTimer;
     private List<BluetoothDevice> mDevices;
 
-    public static PrinterHelper getInstance() {
+    public static PrinterHelper getInstance(Context context) throws PrinterException {
         synchronized (TAG) {
             if (INSTANCE == null) {
                 INSTANCE = new PrinterHelper();
             }
         }
+        INSTANCE.checkPermissions(context);
         return INSTANCE;
     }
 
@@ -51,6 +61,14 @@ public class PrinterHelper {
         refreshBoundedDevices();
     }
 
+    private void checkPermissions(Context context) throws PrinterException {
+        if (hasPermissions(context, Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)) {
+            return;
+        }
+        throw new PrinterException("Android permissions required: 'BLUETOOTH_SCAN' and 'BLUETOOTH_CONNECT'.");
+    }
+
+    @SuppressLint("MissingPermission")
     public void refreshBoundedDevices() {
         this.mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (this.mBluetoothAdapter != null) {
@@ -58,6 +76,22 @@ public class PrinterHelper {
         } else {
             this.mDevices = new ArrayList<>();
         }
+    }
+
+    @TargetApi(Build.VERSION_CODES.S)
+    private boolean hasPermissions(Context context, String... permissions) {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) {
+            return true;
+        }
+
+        for (String permission : permissions) {
+            boolean granted = ActivityCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED;
+            if (!granted) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public boolean isCompatible() {
@@ -128,15 +162,16 @@ public class PrinterHelper {
         this.mTimer = null;
     }
 
-    public void connect(PrinterEnum printer) {
-        connect(printer, null, this.mListener);
+    public void connect(Context context, PrinterEnum printer) {
+        connect(context, printer, null, this.mListener);
     }
 
-    public void connect(PrinterEnum printer, String macAddress) {
-        connect(printer, macAddress, this.mListener);
+    public void connect(Context context, PrinterEnum printer, String macAddress) {
+        connect(context, printer, macAddress, this.mListener);
     }
 
-    public void connect(PrinterEnum printer, String macAddress, OnPrinterListener listener) {
+    @SuppressLint("MissingPermission")
+    public void connect(Context context, PrinterEnum printer, String macAddress, OnPrinterListener listener) {
         this.mBluetoothAdapter.cancelDiscovery();
 
         if (this.mDevice == null || !this.mDevice.getAddress().equals(macAddress)) {
@@ -192,7 +227,8 @@ public class PrinterHelper {
         return getBluetoothDevice(null);
     }
 
-    public PrinterEnum getBondedPrinterEnum() {
+    @SuppressLint("MissingPermission")
+    public PrinterEnum getBondedPrinterEnum(Context context) {
         if (this.mDevices != null && !this.mDevices.isEmpty()) {
             for (PrinterEnum printer : PrinterEnum.values()) {
                 for (BluetoothDevice device : this.mDevices) {
@@ -221,6 +257,7 @@ public class PrinterHelper {
     }
 
     @Nullable
+    @SuppressLint("MissingPermission")
     public BluetoothDevice getPrinterDevice(PrinterEnum printer, String macAddress) {
         BluetoothDevice tmp = null;
         if (this.mDevices != null && !this.mDevices.isEmpty()) {
@@ -266,6 +303,7 @@ public class PrinterHelper {
      * Será exibida uma caixa de diálogo que solicitará a permissão do usuário para ativar o Bluetooth como mostrado na Figura 1. Se o usuário responder "Yes", o sistema começará a ativar o Bluetooth e o foco retornará ao aplicativo após a conclusão (ou falha) do processo.
      * A constante REQUEST_ENABLE_BT passada a startActivityForResult() é um inteiro definido localmente (que deve ser maior que 0) passado pelo sistema para a implementação de onActivityResult() como o parâmetro requestCode.
      * Se ativação do Bluetooth for bem-sucedida, a atividade receberá o código de resultado RESULT_OK no retorno de chamada onActivityResult(). Se o Bluetooth não foi ativado devido a um erro (ou à resposta "No" do usuário), o código de resultado será RESULT_CANCELED.
+     *
      * @param activity
      */
     public void enableBluetooth(Activity activity) {
@@ -276,9 +314,11 @@ public class PrinterHelper {
      * Será exibida uma caixa de diálogo que solicitará a permissão do usuário para ativar o Bluetooth como mostrado na Figura 1. Se o usuário responder "Yes", o sistema começará a ativar o Bluetooth e o foco retornará ao aplicativo após a conclusão (ou falha) do processo.
      * A constante REQUEST_ENABLE_BT passada a startActivityForResult() é um inteiro definido localmente (que deve ser maior que 0) passado pelo sistema para a implementação de onActivityResult() como o parâmetro requestCode.
      * Se ativação do Bluetooth for bem-sucedida, a atividade receberá o código de resultado RESULT_OK no retorno de chamada onActivityResult(). Se o Bluetooth não foi ativado devido a um erro (ou à resposta "No" do usuário), o código de resultado será RESULT_CANCELED.
+     *
      * @param activity
      * @param requestCode
      */
+    @SuppressLint("MissingPermission")
     public void enableBluetooth(Activity activity, int requestCode) {
         Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
         activity.startActivityForResult(enableBtIntent, requestCode);
