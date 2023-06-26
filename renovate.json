@@ -3,7 +3,7 @@
     "config:base"
   ],
   "addLabels": [
-    "Type: Maintenance"
+    "type:dependency"
   ],
   "additionalBranchPrefix": "deps/",
   "packageRules": [
