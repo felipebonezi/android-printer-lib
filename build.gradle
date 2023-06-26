@@ -13,6 +13,11 @@ buildscript {
     }
 }
 
+plugins {
+    id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
+}
+apply from: 'scripts/publish-root.gradle'
+
 allprojects {
     repositories {
         google()
