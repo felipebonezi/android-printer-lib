@@ -1,19 +1,12 @@
 package br.com.ehureka.printers;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.os.Build;
-
-import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -24,7 +17,6 @@ import java.util.TimerTask;
 import java.util.UUID;
 import java.util.Vector;
 
-import br.com.ehureka.printers.exceptions.PrinterException;
 import br.com.ehureka.printers.interfaces.IPrinter;
 import br.com.ehureka.printers.interfaces.OnPrinterListener;
 
@@ -47,25 +39,17 @@ public class PrinterHelper {
     private Timer mTimer;
     private List<BluetoothDevice> mDevices;
 
-    public static PrinterHelper getInstance(Context context) throws PrinterException {
+    public static PrinterHelper getInstance() {
         synchronized (TAG) {
             if (INSTANCE == null) {
                 INSTANCE = new PrinterHelper();
             }
         }
-        INSTANCE.checkPermissions(context);
         return INSTANCE;
     }
 
     private PrinterHelper() {
         refreshBoundedDevices();
-    }
-
-    private void checkPermissions(Context context) throws PrinterException {
-        if (hasPermissions(context, Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)) {
-            return;
-        }
-        throw new PrinterException("Android permissions required: 'BLUETOOTH_SCAN' and 'BLUETOOTH_CONNECT'.");
     }
 
     @SuppressLint("MissingPermission")
@@ -76,22 +60,6 @@ public class PrinterHelper {
         } else {
             this.mDevices = new ArrayList<>();
         }
-    }
-
-    @TargetApi(Build.VERSION_CODES.S)
-    private boolean hasPermissions(Context context, String... permissions) {
-        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) {
-            return true;
-        }
-
-        for (String permission : permissions) {
-            boolean granted = ActivityCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED;
-            if (!granted) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     public boolean isCompatible() {
@@ -256,7 +224,6 @@ public class PrinterHelper {
         return this.mPrinter != null && this.mPrinter.isPrinting();
     }
 
-    @Nullable
     @SuppressLint("MissingPermission")
     public BluetoothDevice getPrinterDevice(PrinterEnum printer, String macAddress) {
         BluetoothDevice tmp = null;
